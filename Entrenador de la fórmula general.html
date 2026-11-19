@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Entrenador de la fórmula general</title>
+<style>
+:root{--bg:#f6f7fa;--card:#fff;--tx:#1b2330;--mu:#5d6778;--bd:#d9dee7;--ac:#2563eb;--ok:#15803d;--er:#b91c1c;--inp:#fff;--onac:#fff;--hl:#eef3ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141c;--card:#1a2030;--tx:#e8ecf4;--mu:#9aa5b8;--bd:#2f384d;--ac:#6aa0ff;--ok:#4ade80;--er:#f87171;--inp:#10141c;--onac:#10141c;--hl:#1f2a44;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10141c;--card:#1a2030;--tx:#e8ecf4;--mu:#9aa5b8;--bd:#2f384d;--ac:#6aa0ff;--ok:#4ade80;--er:#f87171;--inp:#10141c;--onac:#10141c;--hl:#1f2a44;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:18px 14px 40px}
+h1{font-size:1.4rem;margin:0 0 4px}h2{font-size:1rem;margin:8px 0 6px}
+p,li{margin:4px 0;color:var(--mu);font-size:.93rem}
+ol,ul{margin:4px 0;padding-left:20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:12px 0}
+.lock{opacity:.45;pointer-events:none}
+button,select{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;padding:7px 13px;cursor:pointer}
+button.p{background:var(--ac);border-color:var(--ac);color:var(--onac)}
+button:disabled{opacity:.4;cursor:default}
+input{font:inherit;width:84px;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--inp);color:var(--tx)}
+input.ok{border-color:var(--ok)}input.bad{border-color:var(--er)}
+.opt.good{border-color:var(--ok);color:var(--ok)}.opt.wrong{border-color:var(--er);color:var(--er)}
+.row{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.lb{display:inline-flex;align-items:center;gap:6px}
+.msg{min-height:1.3em;font-size:.92rem;margin-top:6px}.msg.ok{color:var(--ok)}.msg.er{color:var(--er)}
+.att{float:right;font-size:.8rem;color:var(--mu)}
+.sc{margin-left:auto;font-size:.8rem;color:var(--mu)}
+.done{border-color:var(--ok)}
+.m{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:1.15rem}
+.eq{background:var(--hl);border-radius:10px;padding:10px 12px;margin:8px 0;text-align:center;overflow-x:auto}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px;line-height:1.3}
+.fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 4px}
+.rd>span{border-top:1.5px solid currentColor;padding:0 2px}
+.work{overflow-x:auto}
+.ln{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 14px;padding:7px 0;border-top:1px dashed var(--bd)}
+.ln i{color:var(--mu);font-size:.82rem;font-style:normal}
+details{border-top:1px dashed var(--bd);padding:6px 0}summary{cursor:pointer;font-weight:600;font-size:.95rem}
+</style></head><body><main>
+<h1>🧮 Entrenador de la fórmula general</h1>
+<p>Ecuaciones cuadráticas ax² + bx + c = 0. Aprende el método o practica con ejercicios aleatorios.</p>
+<div class="row"><button id="tP">✏️ Practicar</button><button id="tL">📖 Aprender</button></div>
+
+<section id="pr">
+<div class="row"><button class="p" id="nw">🔄 Nuevo ejercicio</button><select id="lv" aria-label="Nivel"><option value="0">Fácil (a = 1)</option><option value="1" selected>Medio</option><option value="2">Reto</option></select><span class="sc" id="sc"></span></div>
+<div class="card"><h2>Ecuación</h2><div class="eq m" id="eq"></div></div>
+<div class="card" id="s0"></div><div class="card" id="s1"></div><div class="card" id="s2"></div><div class="card" id="s3"></div>
+<div class="card done" id="fin" hidden><h2>✅ ¡Ejercicio resuelto!</h2><p id="finp"></p><div class="work" id="wk"></div></div>
+</section>
+
+<section id="le" hidden>
+<div class="card"><span class="att" id="pg"></span><h2 id="lt"></h2><div id="lb"></div>
+<div class="row"><button id="bp">◀ Anterior</button><button class="p" id="bn">Siguiente ▶</button></div></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const nz=(a,b)=>{let v=0;while(!v)v=rnd(a,b);return v};
+const n=v=>v<0?'−'+(-v):''+v;
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const sq=v=>{const s=Math.round(Math.sqrt(v));return v>=0&&s*s===v?s:-1};
+const fr=(t,d)=>'<span class="fr"><span>'+t+'</span><span>'+d+'</span></span>';
+const rd=x=>'<span class="rd">√<span>'+x+'</span></span>';
+const red=(p,q)=>{const g=gcd(p,q)||1;p/=g;q/=g;return q<0?[-p,-q]:[p,q]};
+const fz=(p,q)=>{[p,q]=red(p,q);return q===1?n(p):fr(n(p),q)};
+const ft=(p,q)=>{[p,q]=red(p,q);return q===1?n(p):n(p)+'/'+q};
+const parse=s=>{s=String(s).replace(/[−–]/g,'-').replace(/,/g,'.').replace(/\s/g,'');if(!s)return null;const q=s.split('/');const v=q.length===2&&q[0]&&q[1]?Number(q[0])/Number(q[1]):Number(s);return isFinite(v)?v:null};
+const tm=(k,v,f)=>{const m=Math.abs(k),t=(m===1&&v?'':m)+v;return f?(k<0?'−'+t:t):(k<0?' − ':' + ')+t};
+const poly=(a,b,c)=>{let s='',f=1;[[a,'x²'],[b,'x'],[c,'']].forEach(([k,v])=>{if(k){s+=tm(k,v,f);f=0}});return s||'0'};
+const show=(a,b,c,f)=>f===1?poly(a,b,0)+' = '+n(-c):f===2?poly(a,0,0)+' = '+poly(0,-b,-c):poly(a,b,c)+' = 0';
+
+/* Solución paso a paso (se usa en las lecciones y al terminar un ejercicio) */
+function worked(a,b,c){
+ const D=b*b-4*a*c,s=sq(D),d=2*a,t=n(-b),
+ L=(m,k)=>'<div class="ln"><span class="m">'+m+'</span>'+(k?'<i>'+k+'</i>':'')+'</div>',
+ inn=b*b+(a*c<0?' + ':' − ')+Math.abs(4*a*c);
+ let h=L('a = '+n(a)+',&ensp; b = '+n(b)+',&ensp; c = '+n(c),'Identificar a, b y c')+
+  L('x = '+fr('−b ± '+rd('b²−4ac'),'2a'),'Fórmula general')+
+  L('x = '+fr('−('+n(b)+') ± '+rd('('+n(b)+')²−4('+n(a)+')('+n(c)+')'),'2('+n(a)+')'),'Sustituir a, b y c')+
+  L('x = '+fr(t+' ± '+rd(inn),n(d))+' = '+fr(t+' ± '+rd(n(D)),n(d)),'Calcular D = b² − 4ac = '+n(D));
+ if(D<0)h+=L('D &lt; 0','La raíz cuadrada de un número negativo no es real')+L('<b>No hay soluciones reales</b>');
+ else if(D===0)h+=L('x = '+fz(-b,d),'D = 0: una raíz doble');
+ else if(s>0)h+=L('x = '+fr(t+' ± '+s,n(d)),'√'+D+' = '+s)+L('x₁ = '+fz(-b+s,d)+'&emsp; x₂ = '+fz(-b-s,d),'Simplificar');
+ else{const g=a<0?-1:1,u=n(-b*g),p=Math.abs(d),w=Math.sqrt(D);
+  h+=L('x₁ = '+fr(u+(g>0?' + ':' − ')+rd(D),p)+'&emsp; x₂ = '+fr(u+(g>0?' − ':' + ')+rd(D),p),'D no es cuadrado perfecto: la raíz se deja indicada')+
+  L('x₁ ≈ '+n(+((-b+w)/d).toFixed(2))+'&emsp; x₂ ≈ '+n(+((-b-w)/d).toFixed(2)),'Aproximación a 2 decimales')}
+ return h}
+
+/* ---------- Modo aprendizaje ---------- */
+const E=x=>'<div class="eq m">'+x+'</div>';
+const det=(t,a,b,c,o)=>'<details'+(o?' open':'')+'><summary>'+t+'</summary><div class="work">'+worked(a,b,c)+'</div></details>';
+const P=[
+['1. ¿Qué es una ecuación cuadrática?','<p>Es una ecuación donde el mayor exponente de x es 2. Su forma estándar es:</p>'+E('ax² + bx + c = 0')+'<p><b>a</b> acompaña a x², <b>b</b> acompaña a x y <b>c</b> es el número solo. Además, a ≠ 0. El signo forma parte del número.</p><p>Ejemplo: en 3x² − 5x + 2 = 0 tenemos a = 3, b = −5 y c = 2.</p><p>Si no está igualada a 0, pasa todos los términos a un lado: 6x² + 3x = 2 se vuelve 6x² + 3x − 2 = 0, con a = 6, b = 3 y c = −2.</p>'],
+['2. La fórmula general','<p>Resuelve cualquier ecuación cuadrática completa:</p>'+E('x = '+fr('−b ± '+rd('b²−4ac'),'2a'))+'<p>El símbolo ± da dos soluciones: x₁ con + y x₂ con −. Pasos:</p><ol><li>Escribe la ecuación en forma estándar e identifica a, b y c.</li><li>Sustituye a, b y c en la fórmula; usa paréntesis con los números negativos.</li><li>Calcula para encontrar x₁ y x₂.</li></ol>'],
+['3. Ejemplo 1: 6x² + 3x = 2','<p>Primero iguala a cero: <b>6x² + 3x − 2 = 0</b>. Luego sigue las líneas de arriba hacia abajo:</p><div class="work">'+worked(6,3,-2)+'</div>'],
+['4. El discriminante D','<p>Es lo que queda dentro de la raíz. Calcúlalo primero: te dice cuántas soluciones reales hay.</p>'+E('D = b² − 4ac')+'<ul><li><b>D &gt; 0:</b> dos raíces reales distintas.</li><li><b>D = 0:</b> una raíz real doble (las dos soluciones son iguales).</li><li><b>D &lt; 0:</b> no hay raíces reales.</li></ul><p>Ojo: tu libro llama «irracionales» a las soluciones cuando D &lt; 0, pero los irracionales sí son reales. En ese caso las soluciones son números complejos, que se estudian después.</p>'],
+['5. Más ejemplos','<p>Toca cada ejemplo para abrirlo.</p>'+det('x² − 5x + 6 = 0 (D &gt; 0)',1,-5,6,1)+det('x² − 6x + 9 = 0 (D = 0)',1,-6,9)+det('x² + 2x + 5 = 0 (D &lt; 0)',1,2,5)+det('2x² + 3x − 4 = 0 (D no es cuadrado perfecto)',2,3,-4)],
+['6. Errores comunes y prueba tu ecuación','<ul><li>Si b = −5, entonces −b = 5: el signo cambia.</li><li>(−3)² = 9, no −9: escribe paréntesis.</li><li>Si c es negativo, −4ac suma: b² − 4(6)(−2) = b² + 48.</li><li>El 2a divide a todo el numerador, no solo a la raíz.</li></ul><h2>Prueba con tu ecuación</h2><div class="row"><label class="lb">a <input id="ta"></label><label class="lb">b <input id="tb"></label><label class="lb">c <input id="tc"></label><button class="p" id="ty">Resolver</button></div><div class="msg er" id="tm"></div><div class="work" id="tw"></div>']
+];
+let Q=0;
+function lesson(i){
+ Q=i;$('lt').textContent=P[i][0];$('lb').innerHTML=P[i][1];$('pg').textContent=(i+1)+' / '+P.length;
+ $('bp').disabled=i===0;$('bn').textContent=i===P.length-1?'Ir a practicar ✏️':'Siguiente ▶';
+ if($('ty'))$('ty').onclick=()=>{
+  const v=['a','b','c'].map(k=>parse($('t'+k).value)),m=$('tm');m.textContent='';$('tw').innerHTML='';
+  if(v.some(x=>x===null||!Number.isInteger(x)||Math.abs(x)>99))m.textContent='Escribe números enteros (de −99 a 99) en a, b y c.';
+  else if(v[0]===0)m.textContent='Si a = 0 no es una ecuación cuadrática: a debe ser distinto de 0.';
+  else $('tw').innerHTML=worked(v[0],v[1],v[2]);
+ };
+}
+function tab(l){$('pr').hidden=!!l;$('le').hidden=!l;$('tL').className=l?'p':'';$('tP').className=l?'':'p'}
+$('tL').onclick=()=>tab(1);$('tP').onclick=()=>tab(0);
+$('bp').onclick=()=>{lesson(Q-1);scrollTo(0,0)};
+$('bn').onclick=()=>{if(Q<P.length-1){lesson(Q+1);scrollTo(0,0)}else{tab(0);scrollTo(0,0)}};
+
+/* ---------- Modo práctica ---------- */
+let S,T=[0,0];
+function gen(lv){
+ for(let i=0;i<5000;i++){
+  const a=lv?nz(-4,4):1,b=nz(-9,9),c=nz(-9,9),D=b*b-4*a*c,s=sq(D);
+  if(lv===0&&s<1)continue;
+  if(lv===1&&s<0)continue;
+  return {a,b,c,D,s,f:rnd(0,lv?2:1)};
+ }
+ return {a:1,b:-5,c:6,D:1,s:1,f:0};
+}
+function score(){$('sc').textContent='Sin ayuda: '+T[0]+' de '+T[1]}
+function start(){
+ const g=gen(+$('lv').value),d=2*g.a,two=g.D>0,
+ hd=(i,t,p)=>'<span class="att" id="a'+i+'">Intentos: 0/3</span><h2>'+t+'</h2><p>'+p+'</p>',
+ bt=(i,l)=>'<div class="row"><button class="p" id="b'+i+'">'+l+'</button></div><div class="msg" id="m'+i+'"></div>',
+ inp=(id,l)=>'<label class="lb">'+l+' <input id="'+id+'" inputmode="text" autocomplete="off"></label>';
+ S={...g,step:0,att:[0,0,0,0],rev:0};
+ S.R=g.D===0?[-g.b/d]:[(-g.b+Math.sqrt(g.D))/d,(-g.b-Math.sqrt(g.D))/d];
+ S.RT=g.s>=0?(g.D===0?[ft(-g.b,d)]:[ft(-g.b+g.s,d),ft(-g.b-g.s,d)]):S.R.map(v=>n(+v.toFixed(2)));
+ $('eq').textContent=show(g.a,g.b,g.c,g.f);
+ $('s0').innerHTML=hd(0,'Paso 1. Forma estándar','Pasa todos los términos al lado izquierdo (ax² + bx + c = 0) y anota a, b y c con su signo.')+'<div class="row">'+inp('ia','a =')+inp('ib','b =')+inp('ic','c =')+'</div>'+bt(0,'Revisar');
+ $('s1').innerHTML=hd(1,'Paso 2. Discriminante','Calcula D = b² − 4ac con los valores del paso anterior.')+'<div class="row">'+inp('iD','D =')+'</div>'+bt(1,'Revisar');
+ $('s2').innerHTML=hd(2,'Paso 3. Tipo de soluciones','Según el signo de D, ¿cuántas raíces reales tiene la ecuación?')+'<div class="row"><button class="opt">Dos raíces reales distintas</button><button class="opt">Una raíz real (doble)</button><button class="opt">Ninguna raíz real</button></div><div class="msg" id="m2"></div>';
+ $('s3').innerHTML=hd(3,'Paso 4. Soluciones',(g.s>=0?'Escribe cada solución como entero, fracción (a/b) o decimal.':'D no es un cuadrado perfecto: redondea cada solución a 2 decimales.')+(two?' El orden no importa.':' Es una raíz doble: escribe un solo valor.'))+'<div class="row">'+(two?inp('x0','x₁ =')+inp('x1','x₂ ='):inp('x0','x ='))+'</div>'+bt(3,'Revisar');
+ $('b0').onclick=c0;$('b1').onclick=c1;$('b3').onclick=c3;
+ document.querySelectorAll('#s2 .opt').forEach((b,j)=>b.onclick=()=>c2(j,b));
+ $('fin').hidden=true;$('s3').hidden=g.D<0;
+ upd();score();
+}
+function upd(){['s0','s1','s2','s3'].forEach((id,i)=>$(id).classList.toggle('lock',S.step!==i))}
+function nx(){S.step++;if(S.step===3&&S.D<0)S.step=4;if(S.step>3)done();upd()}
+function res(i,ok,msg,rev){
+ S.att[i]++;$('a'+i).textContent='Intentos: '+S.att[i]+'/3';
+ const m=$('m'+i);
+ if(ok){m.className='msg ok';m.textContent='¡Correcto!';return nx()}
+ if(S.att[i]>=3){rev();S.rev=1;m.className='msg er';m.textContent='Se agotaron los intentos: se muestran las respuestas correctas.';return nx()}
+ m.className='msg er';m.textContent=msg;
+}
+function c0(){
+ const K=['a','b','c'],ok=K.map(k=>parse($('i'+k).value)===S[k]);
+ K.forEach((k,j)=>$('i'+k).className=ok[j]?'ok':'bad');
+ res(0,ok.every(Boolean),'Hay errores. Pista: deja todo igualado a 0 y conserva el signo de cada número (a es el que acompaña a x²).',()=>K.forEach(k=>{$('i'+k).value=n(S[k]);$('i'+k).className='ok'}));
+}
+function c1(){
+ const e=$('iD'),ok=parse(e.value)===S.D;e.className=ok?'ok':'bad';
+ res(1,ok,'Pista: D = b² − 4ac = ('+n(S.b)+')² − 4·('+n(S.a)+')·('+n(S.c)+'). Cuida los signos.',()=>{e.value=n(S.D);e.className='ok'});
+}
+function c2(j,b){
+ const k=S.D>0?0:S.D===0?1:2,B=document.querySelectorAll('#s2 .opt');
+ b.classList.add(j===k?'good':'wrong');
+ res(2,j===k,'Pista: D = '+n(S.D)+'. Si D es positivo hay dos raíces, si es cero una, y si es negativo ninguna real.',()=>B[k].classList.add('good'));
+}
+function c3(){
+ const R=S.R,v=R.map((_,j)=>$('x'+j).value),
+ hit=(t,r)=>{const x=parse(t);return x!==null&&Math.abs(x-r)<(t.includes('/')?1e-9:.011)},
+ ok=R.length===1?hit(v[0],R[0]):(hit(v[0],R[0])&&hit(v[1],R[1]))||(hit(v[0],R[1])&&hit(v[1],R[0]));
+ R.forEach((_,j)=>$('x'+j).className=ok?'ok':'bad');
+ res(3,ok,'Pista: x = (−b ± √D) ÷ 2a = ('+n(-S.b)+' ± '+(S.s>=0?S.s:'√'+S.D)+') ÷ '+n(2*S.a)+'. Usa + para una raíz y − para la otra.',()=>R.forEach((_,j)=>{$('x'+j).value=S.RT[j];$('x'+j).className='ok'}));
+}
+function done(){
+ S.step=4;T[1]++;if(!S.rev)T[0]++;score();
+ $('fin').hidden=false;
+ $('finp').textContent=(S.D<0?'D = '+n(S.D)+' < 0: no hay soluciones reales. ':'')+(S.rev?'Algunos pasos se revelaron: inténtalo de nuevo con otro ejercicio. Así se resuelve:':'Resuelto sin ayuda, ¡buen trabajo! Así se ve el procedimiento completo:');
+ $('wk').innerHTML=worked(S.a,S.b,S.c);
+ $('fin').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT'){const c=e.target.closest('.card'),b=c&&c.querySelector('button.p');if(b)b.click()}});
+$('nw').onclick=start;$('lv').onchange=start;
+tab(0);lesson(0);start();
+</script></body></html>
